@@ -1,0 +1,592 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ignacio López CV</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400&family=Montserrat:wght@600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f1f3f5;
+            color: #264653;
+            font-size: 0.85em;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 25%;
+            padding: 20px;
+            background-color: #2a9d8f;
+            color: #264653;
+            border-radius: 8px;
+            margin-left: 15px;
+            position: relative;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" opacity="0.08"><polygon points="20,0 40,20 20,40 0,20" fill="%23e9c46a"/></svg>');
+            background-repeat: repeat;
+        }
+        .main-content {
+            width: 75%;
+            padding: 20px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80" opacity="0.04"><polygon points="40,0 80,40 40,80 0,40" fill="%23e9c46a"/></svg>') repeat;
+        }
+        .header {
+            text-align: left;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            position: relative;
+            border-bottom: 4px solid #e9c46a;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 {
+            font-family: 'Montserrat', sans-serif;
+            color: #264653;
+            font-size: 2.5em;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            position: relative;
+        }
+        .header h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 80px;
+            height: 5px;
+            background: linear-gradient(90deg, #f4a261, #e76f51);
+            clip-path: polygon(0 0, 90% 0, 100% 100%, 0 100%);
+        }
+        .header p {
+            font-family: 'Montserrat', sans-serif;
+            color: #e76f51;
+            font-size: 1.2em;
+            margin: 8px 0;
+            font-weight: 600;
+        }
+        .header .contact {
+            font-size: 0.9em;
+            color: #264653;
+            margin: 8px 0;
+        }
+        .header .contact i {
+            margin-right: 8px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 0;
+        }
+        .section h2 {
+            font-family: 'Montserrat', sans-serif;
+            color: #264653;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            position: relative;
+            text-transform: uppercase;
+        }
+        .section h2::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 6px;
+            width: 18px;
+            height: 18px;
+            background-color: #e76f51;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        }
+        .experience-item {
+            background: linear-gradient(180deg, #f8f9fa, #ffffff);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            position: relative;
+            border-left: 5px solid #2a9d8f;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+        }
+        .experience-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: -10px;
+            bottom: -20px;
+            width: 2px;
+            height: 20px;
+            border-left: 2px dashed #e9c46a;
+        }
+        .experience-item h3 {
+            font-family: 'Montserrat', sans-serif;
+            color: #264653;
+            font-size: 1.4em;
+            margin: 0 0 8px;
+        }
+        .experience-item p, .experience-item li {
+            color: #264653;
+            margin: 4px 0;
+            line-height: 1.5;
+        }
+        .experience-item ul {
+            margin: 8px 0 0 15px;
+            padding: 0;
+        }
+        .experience-item li {
+            margin-bottom: 6px;
+        }
+        .experience-item::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 15px;
+            width: 16px;
+            height: 16px;
+            background-color: #f4a261;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        }
+        .education-item {
+            margin-bottom: 15px;
+        }
+        .education-item h3 {
+            font-family: 'Montserrat', sans-serif;
+            color: #2a9d8f;
+            font-size: 1.3em;
+            margin: 4px 0;
+        }
+        .education-item p {
+            color: #264653;
+            margin: 4px 0;
+            line-height: 1.4;
+        }
+        .sidebar h2 {
+            font-family: 'Montserrat', sans-serif;
+            color: #264653;
+            font-size: 1.5em;
+            margin-bottom: 12px;
+            position: relative;
+            text-transform: uppercase;
+        }
+        .sidebar h2::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -4px;
+            width: 50px;
+            height: 3px;
+            background-color: #e9c46a;
+        }
+        .skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .skill {
+            background-color: #e9c46a;
+            color: #264653;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        .skill:hover {
+            transform: scale(1.05);
+            background-color: #f4a261;
+        }
+        .languages {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .language {
+            background-color: #f4a261;
+            color: #ffffff;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .geometric-decoration {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(45deg, #264653, #2a9d8f);
+            clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 0% 100%);
+            opacity: 0.18;
+        }
+        .sidebar-decoration {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #e76f51, #f4a261);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            opacity: 0.25;
+        }
+        .expandable {
+            overflow: hidden;
+        }
+        .summary {
+            display: block;
+        }
+        .details {
+            display: none;
+            margin-top: 10px;
+        }
+        .expand-button {
+            background-color: #e76f51;
+            color: #ffffff;
+            border: none;
+            padding: 6px 12px;
+            font-size: 0.9em;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background-color 0.3s ease;
+        }
+        .expand-button:hover {
+            background-color: #d65f41;
+        }
+        .expand-button.expanded::after {
+            content: 'Hide Details';
+        }
+        .expand-button::after {
+            content: 'View Details';
+        }
+        @media print {
+            body {
+                background-color: #ffffff;
+            }
+            .container {
+                box-shadow: none;
+                padding: 10px;
+                display: block;
+            }
+            .sidebar, .main-content {
+                width: 100%;
+                margin: 0;
+                background: none;
+            }
+            .sidebar {
+                background: #e0e0e0;
+                color: #000000;
+                border-radius: 0;
+                padding: 10px;
+            }
+            .geometric-decoration, .sidebar-decoration {
+                background: linear-gradient(45deg, #cccccc, #999999);
+                opacity: 0.5;
+            }
+            .skill {
+                background-color: #d0d0d0;
+                color: #000000;
+            }
+            .skill:hover {
+                transform: none;
+                background-color: #d0d0d0;
+            }
+            .language {
+                background-color: #b0b0b0;
+                color: #000000;
+            }
+            .header, .section h2, .experience-item h3, .education-item h3 {
+                color: #000000;
+            }
+            .header p {
+                color: #333333;
+            }
+            .experience-item {
+                background: #f0f0f0;
+                border-left-color: #666666;
+            }
+            .experience-item::before, .experience-item::after {
+                background-color: #666666;
+                border-left-color: #666666;
+            }
+            .section h2::before {
+                background-color: #666666;
+            }
+            .sidebar {
+                order: -1;
+            }
+            .main-content {
+                order: 0;
+            }
+            .print-button, .expand-button {
+                display: none;
+            }
+            .details {
+                display: block;
+            }
+            .summary {
+                display: none;
+            }
+        }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar, .main-content {
+                width: 100%;
+                margin: 0;
+            }
+            .sidebar {
+                border-radius: 0 0 8px 8px;
+            }
+        }
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #2a9d8f;
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease;
+        }
+        .print-button:hover {
+            background-color: #21867a;
+        }
+</style>
+<script>
+    function toggleDetails(id) {
+        const details = document.getElementById(id);
+        const button = details.previousElementSibling;
+        if (details.style.display === 'none' || details.style.display === '') {
+            details.style.display = 'block';
+            button.classList.add('expanded');
+        } else {
+            details.style.display = 'none';
+            button.classList.remove('expanded');
+        }
+    }
+</script>
+</head>
+<body>
+<button class="print-button" onclick="window.print()">🖨️ Imprimir</button>
+<div class="container">
+<div class="main-content">
+<div class="geometric-decoration"></div>
+<div class="header" role="banner">
+<h1>Ignacio López</h1>
+<p>Software Architect & Senior Developer | Machine Learning Specialist</p>
+<div class="contact">
+<i class="fas fa-phone"></i> +34 667235287<br>
+<i class="fas fa-envelope"></i> <a href="mailto:ognacho@gmail.com">ognacho@gmail.com</a>
+</div>
+</div>
+<div class="section">
+<h2>About Me</h2>
+<p>Dynamic Software Architect and Senior Developer with over a decade of experience delivering AI-driven solutions across automotive, logistics, manufacturing, and educational sectors. Expert in designing scalable cloud architectures and Machine Learning models using Python, PyTorch, YOLO, and AWS, with a proven track record in EU-funded R&D projects like DIGITbrain, 5G-ROUTES, and AWARD. Skilled in leading cross-functional teams, mastering technologies like C++, AUTOSAR, and 5G, and driving innovation in autonomous mobility and smart industries, I am committed to creating sustainable, high-impact technologies.</p>
+</div>
+<div class="section">
+<h2>Professional Experience</h2>
+<div class="experience-item">
+<h3>Software Architect & Senior Developer</h3>
+<p>ENIDE · Full-time · Apr 2021 - Present · 4 yrs 2 mos · Barcelona, Catalonia, Spain</p>
+<div class="expandable">
+<p class="summary">Led R&D and development for EU-funded projects, delivering AI-driven, 5G-enabled solutions for manufacturing, logistics, and autonomous mobility using Python, PyTorch, and AWS.</p>
+<button class="expand-button" onclick="toggleDetails('enide-details')"></button>
+<div class="details" id="enide-details">
+<p>Led end-to-end R&D, software architecture, and development for EU-funded projects, delivering AI-driven, 5G-enabled, and cloud-based solutions for manufacturing, logistics, and autonomous mobility. Architected scalable systems using Python, PyTorch, YOLO, Flask, Docker, and AWS, integrating digital twins, real-time analytics, and computer vision. Collaborated with international teams to meet H2020 objectives, driving innovation in smart industries and sustainable transport.</p>
+<ul>
+<li><strong>DIGITbrain</strong>: Designed and developed cloud-based data processing services and a rule processor for digital twin platforms, enabling SMEs to manipulate data for Manufacturing as a Service (MaaS) using Python, Flask, and AWS.</li>
+<li><strong>5G-ROUTES</strong>: Built a web application backend with AI services, including a temperature predictor for 5G-connected vehicles, a logistics data hub, and a Machine Learning model for driving style and maintenance prediction, using Python, PyTorch, and AWS.</li>
+<li><strong>3CO</strong>: Developed a backend service with a YOLO-based AI algorithm (trained end-to-end using PyTorch) for label recognition and explanation, plus a rewards system and user management infrastructure, deployed on AWS with Docker.</li>
+<li><strong>AWARD</strong>: Conducted data analysis for autonomous logistics evaluations, creating Python scripts to process logs and derive actionable insights for heavy-duty vehicle performance.</li>
+<li><strong>InPercept</strong>: Performed data analysis for autonomous driving R&D, developing Python-based tools to evaluate logs from vehicle sensors (cameras, radars), supporting connected vehicle scenarios.</li>
+<li><strong>PODIUM</strong>: Architected a backend service for on-demand autonomous shuttle reservations, enabling efficient urban mobility solutions using Python, Flask, and AWS.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="experience-item">
+<h3>Python Software Architect & Developer</h3>
+<p>Aubay Spain · Full-time · Nov 2019 - Apr 2021 · 1 yr 6 mos · Barcelona, Spain</p>
+<div class="expandable">
+<p class="summary">Designed Python-based architectures for educational projects, delivering a facial recognition application for secure online exams using Flask, AWS Rekognition, and OpenCV.</p>
+<button class="expand-button" onclick="toggleDetails('aubay-details')"></button>
+<div class="details" id="aubay-details">
+<p>Led the design and development of Python-based software architectures, overseeing high-impact projects for educational institutions. Guided cross-functional teams to deliver scalable, secure solutions aligned with business objectives, leveraging modern cloud and AI technologies.</p>
+<ul>
+<li>Architected a facial recognition application for Universitat Oberta de Catalunya (UOC) using Python, Flask, AWS Rekognition, and OpenCV, enabling secure online activities such as exams for students.</li>
+<li>Deployed the application on AWS using Docker containers, integrating multiple AWS services (e.g., EC2, S3, Lambda) to ensure scalability and reliability.</li>
+<li>Optimized facial recognition algorithms with OpenCV, achieving high accuracy and efficient processing for real-time verification.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="experience-item">
+<h3>Senior Python Developer & Junior Architect</h3>
+<p>CAPITOLE CONSULTING · Full-time · Oct 2018 - Nov 2019 · 1 yr 2 mos · Barcelona, Spain</p>
+<div class="expandable">
+<p class="summary">Led the tooling department and developed an automotive component for electric vehicles using C++ and AUTOSAR for Daimler and Panasonic.</p>
+<button class="expand-button" onclick="toggleDetails('capitole-details')"></button>
+<div class="details" id="capitole-details">
+<p>Led the tooling department, managing development processes in the automotive sector, and later transitioned to hands-on development of critical automotive components. Delivered innovative solutions near Barcelona, ensuring compliance with industry standards.</p>
+<ul>
+<li>Managed a team as lead of the tooling department, overseeing the development of automotive software tools using Python.</li>
+<li>Developed a high-performance automotive component for electric vehicles for Daimler and Panasonic, utilizing C++ and AUTOSAR standards to ensure robust functionality and safety.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="experience-item">
+<h3>C++ Developer</h3>
+<p>Indra · Mar 2018 - Oct 2018 · 8 mos · Barcelona, Catalonia, Spain</p>
+<div class="expandable">
+<p class="summary"> C++ development for the T-Mobilitat transport project.</p>
+<button class="expand-button" onclick="toggleDetails('indra-details')"></button>
+<div class="details" id="indra-details">
+<p>Served as a Senior Developer in the transport department, contributing to the T-Mobilitat project with high-quality C++ development for critical systems.Developed C++ components for backend and embedded systems in the context of the T-Mobilitat project, a fare integration initiative for public transportation. Tasks included implementation of control modules and support for validation and ticketing devices, aligned with system architecture and technical requirements.</p>
+</div>
+</div>
+</div>
+<div class="experience-item">
+<h3>Senior Software Developer & Junior Architect</h3>
+<p>DIAGNÓSTICO A BORDO, S.L. · Jul 2017 - Mar 2018 · 9 mos · Argentona, Catalonia, Spain</p>
+<div class="expandable">
+<p class="summary">Conducted R&D and designed software architectures for innovative automotive projects.</p>
+<button class="expand-button" onclick="toggleDetails('diagnostico-details')"></button>
+<div class="details" id="diagnostico-details">
+<p>Participated in R&D and software architecture design for diagnostic and automotive connectivity systems.
+Details:
+Worked on early-stage architecture and software development for diagnostic solutions in vehicles. Contributions included modular design, integration of on-board communication protocols, and support for prototyping activities within the R&D department.</p>
+</div>
+</div>
+</div>
+<div class="experience-item">
+<h3>Software Developer</h3>
+<p>CTAG – Centro Tecnológico de Automoción de Galicia · Sep 2014 - Aug 2017 · 3 yrs · Galicia, Spain</p>
+<div class="expandable">
+<p class="summary">Developed C++ solutions for automotive infotainment and ITS, enhancing vehicle connectivity.</p>
+<button class="expand-button" onclick="toggleDetails('ctag-details')"></button>
+<div class="details" id="ctag-details">
+<p>Developed software in Python and C++ for automotive infotainment, ITS platforms, and autonomous driving systems.
+Details:
+Worked on the design and development of software modules for automotive applications, focusing on infotainment, intelligent transport systems, and autonomous driving R&D. Implemented middleware components in Python and C++ to support perception, communication, and decision-making layers. Collaborated with HMI and validation teams to deliver integrated, testable prototypes aligned with industry standards.</p>
+<ul>
+<li>Developed applications in Python and C++ for infotainment and vehicle connectivity.</li>
+<li>Implemented middleware layers for autonomous driving logic and sensor integration.</li>
+<li>Integrated communication protocols (e.g., CAN bus) for real-time system interaction.</li>
+<li>Supported HMI development and prototyping for driver interaction systems.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="section">
+<h2>Languages</h2>
+<div class="languages">
+<div class="language">Spanish: Native Proficiency</div>
+<div class="language">Galician: Native Proficiency</div>
+<div class="language">English: Full Professional Proficiency</div>
+</div>
+</div>
+<div class="section">
+<h2>Education</h2>
+<div class="education-item">
+<h3>Web Application Development</h3>
+<p>IES Teis · 2013 - 2014</p>
+</div>
+<div class="education-item">
+<h3>Multiplatform Application Development</h3>
+<p>IES Teis · 2011 - 2013</p>
+</div>
+</div>
+</div>
+<div class="sidebar">
+<div class="sidebar-decoration"></div>
+<div class="section">
+<h2>Skills</h2>
+<div class="skills">
+<span class="skill">Python</span>
+<span class="skill">AWS</span>
+<span class="skill">Machine Learning</span>
+<span class="skill">Flask</span>
+<span class="skill">Docker</span>
+<span class="skill">OOP</span>
+<span class="skill">Data Analysis</span>
+<span class="skill">Software Engineering</span>
+<span class="skill">Git</span>
+<span class="skill">C++</span>
+<span class="skill">C#</span>
+<span class="skill">MySQL</span>
+<span class="skill">Linux</span>
+<span class="skill">Java</span>
+<span class="skill">TDD</span>
+<span class="skill">Scrum</span>
+<span class="skill">XML/JSON</span>
+<span class="skill">CAN Bus</span>
+<span class="skill">OpenCV</span>
+<span class="skill">AWS Rekognition</span>
+<span class="skill">PyTorch</span>
+<span class="skill">YOLO</span>
+<span class="skill">AUTOSAR</span>
+<span class="skill">5G</span>
+<span class="skill">Digital Twins</span>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
